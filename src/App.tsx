@@ -4,13 +4,6 @@ import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import './styles/global.css'
 
-/*
-  [X] Validação / Transformação
-  [] Field Arrays 37
-  [] Upload de Arquivos
-  [] Composition Pattern
-*/
-
 const createUserFormSchema = z.object({
   name: z.string()
     .min(1, 'O nome é obrigatório')
@@ -45,7 +38,7 @@ const App = () => {
     resolver: zodResolver(createUserFormSchema)
   })
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append } = useFieldArray({
     control,
     name: 'techs'
   })
