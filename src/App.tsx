@@ -1,12 +1,12 @@
-import { useForm } from 'react-hook-form'
-import './styles/global.css'
 import { useState } from 'react'
+import { useForm, useFieldArray } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
+import './styles/global.css'
 
 /*
   [X] Validação / Transformação
-  [] Field Arrays
+  [] Field Arrays 37
   [] Upload de Arquivos
   [] Composition Pattern
 */
@@ -26,18 +26,35 @@ const createUserFormSchema = z.object({
     .toLowerCase(),
 
   password: z.string()
-    .min(6, 'A senha precisa de no mínimo 6 caracteres')
+    .min(6, 'A senha precisa de no mínimo 6 caracteres'),
+
+  techs: z.array(z.object({
+    title: z.string()
+      .min(1, 'O título é obrigatório'),
+
+    knowledge: z.coerce.number()
+      .min(1).max(100)
+  })).min(2, 'Insira pelo menos 2 tecnologias')
 })
 
 type CreateUserFormData = z.infer<typeof createUserFormSchema>
 
 const App = () => {
   const [output, setOutput] = useState('')
-  const { register, handleSubmit, formState: { errors } } = useForm<CreateUserFormData>({
+  const { register, handleSubmit, formState: { errors }, control } = useForm<CreateUserFormData>({
     resolver: zodResolver(createUserFormSchema)
   })
 
-  function createUser(data: any) {
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: 'techs'
+  })
+
+  function addNewTech() {
+    append({ title: '', knowledge: 0 })
+  }
+
+  function createUser(data: CreateUserFormData) {
     setOutput(JSON.stringify(data, null, 2))
   }
 
@@ -54,7 +71,7 @@ const App = () => {
             className='border border-zinc-200 shadow-sm rounded h-10 px-3'
             {...register('name')}
           />
-          {errors.name && <span>{errors.name.message}</span>}
+          {errors.name && <span className='text-red-500 text-sm'>{errors.name.message}</span>}
         </div>
 
         <div className="flex flex-col gap-1">
@@ -64,7 +81,7 @@ const App = () => {
             className='border border-zinc-200 shadow-sm rounded h-10 px-3'
             {...register('email')}
           />
-          {errors.email && <span>{errors.email.message}</span>}
+          {errors.email && <span className='text-red-500 text-sm'>{errors.email.message}</span>}
         </div>
 
         <div className="flex flex-col gap-1">
@@ -74,7 +91,43 @@ const App = () => {
             className='border border-zinc-200 shadow-sm rounded h-10 px-3'
             {...register('password')}
           />
-          {errors.password && <span>{errors.password.message}</span>}
+          {errors.password && <span className='text-red-500 text-sm'>{errors.password.message}</span>}
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label htmlFor="" className='flex items-center justify-between'>
+            Tecnologias
+
+            <button type='button' onClick={addNewTech} className='text-emerald-500 text-sm'>Adicionar</button>
+          </label>
+
+          {fields.map((field, index) => {
+            return (
+              <div className='flex gap-2' key={field.id}>
+                <div className="flex-1 flex flex-col gap-1">
+                  <input
+                    type="text"
+                    className='border border-zinc-200 shadow-sm rounded h-10 px-3'
+                    {...register(`techs.${index}.title`)}
+                  />
+
+                  {errors.techs?.[index]?.title && <span className='text-red-500 text-sm'>{errors.techs?.[index]?.title?.message}</span>}
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <input
+                    type="number"
+                    className='w-16 border border-zinc-200 shadow-sm rounded h-10 px-3'
+                    {...register(`techs.${index}.knowledge`)}
+                  />
+
+                  {errors.techs?.[index]?.knowledge && <span className='text-red-500 text-sm'>{errors.techs?.[index]?.knowledge?.message}</span>}
+                </div>
+              </div>
+            )
+          })}
+
+          {errors.techs && <span className='text-red-500 text-sm'>{errors.techs.message}</span>}
         </div>
 
         <button
